@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "151085537333",
+    "project_id": "project-tracker-4d81d",
+    "storage_bucket": "project-tracker-4d81d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:151085537333:android:f2f94dd71052533705397c",
+        "android_client_info": {
+          "package_name": "com.binus.aplikasiportofolio"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "151085537333-0ou93kaj5m81fv3gea4pa0fk8paurl1p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJoKlhRXqzuakneeEF-q2d-u-pMIWXjKk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "151085537333-0ou93kaj5m81fv3gea4pa0fk8paurl1p.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
