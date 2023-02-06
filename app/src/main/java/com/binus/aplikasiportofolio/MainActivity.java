@@ -32,6 +32,8 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -51,6 +53,10 @@ public class MainActivity extends AppCompatActivity {
     CollectionReference milestoneRef = db.collection("milestone");
     private final String TAG = "+++REPO";
 
+    FirebaseAuth auth;
+    Button btnLogout;
+    FirebaseUser user;
+    TextView txtUser;
     //    private DbHandler dbHandler = new DbHandler(this);
     private Goal goal = new Goal();
     private List<Goal> goalList = new ArrayList<>();
@@ -65,49 +71,26 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-//        goal.setName("RPA");
-//        goal.setDescription("implementasi RPA pada project");
-//        goal.setPriority(5);
-//        goal.setStartDate(Timestamp.valueOf("2023-02-01 00:00:00"));
-//        goal.setFinalDate(Timestamp.valueOf("2023-05-01 00:00:00"));
-//        goal.setCompleted(false);
-//
-//        Milestone milestone = new Milestone();
-//
-//        milestone.setName("riset");
-//        milestone.setDescription("mencari data");
-//        milestone.setDueDate(Timestamp.valueOf("2023-03-01 00:00:00"));
-//        milestone.setCompleted(false);
-//        milestone.setGoalId(1);
+        auth= FirebaseAuth.getInstance();
+        btnLogout= findViewById(R.id.btn_logout);
+        user = auth.getCurrentUser();
+        txtUser = findViewById(R.id.txt_user);
 
-//        dbHandler.resetGoal();
-//        dbHandler.resetMilestone();
-//
-//        dbHandler.insertGoal(goal);
-//        dbHandler.insertMilestone(milestone);
-//        dbHandler.insertMilestone(milestone);
+        if (user==null){
+            Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+            startActivity(intent);
+            finish();
+        }
 
-//        goalRepo = new GoalRepo(dbHandler);
-//        goalList= goalRepo.fetchGoalMilestone();
+        txtUser.append(user.getEmail());
 
-//        goalList = FirebaseRepo.getInstance().getAllGoal();
-//        milestoneList=dbHandler.getAllMilestone();
+        btnLogout.setOnClickListener(view -> {
+            auth.signOut();
+            Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+            startActivity(intent);
+            finish();
+        });
 
-//        for (Goal goal1 : goalList) {
-//            Log.i("+++Main", goal1.getName());
-////            goal1.setMilestoneList(milestoneList);
-//        }
-////
-//        for (Milestone milestone1 : milestoneList) {
-//            Log.i("+++Main", milestone1.getName());
-//        }
-
-
-        //        expandableListView = (ExpandableListView) findViewById(R.id.expandableListView);
-        //        goalExpandableAdapter = new GoalExpandableAdapter(this, goalList );
-        //        expandableListView.setAdapter(goalExpandableAdapter);
-
-//        initView();
 
     }
 
@@ -119,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void initView(){
         goalList = new ArrayList<>();
-        goalRef.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+        goalRef.whereEqualTo("user",user.getUid()).get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
             @Override
             public void onComplete(@NonNull Task<QuerySnapshot> task) {
 //                List<Goal> goalList = new ArrayList<>();
@@ -128,10 +111,11 @@ public class MainActivity extends AppCompatActivity {
                     if (!snapshot.isEmpty()) {
                         Log.d(TAG, "DocumentSnapshot data: " + snapshot.size());
                         snapshot.getDocuments().forEach(documentSnapshot -> {
-                            milestoneList = new ArrayList<>();
                             goalRef.document(documentSnapshot.getId()).collection("milestone").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                                 @Override
                                 public void onComplete(@NonNull Task<QuerySnapshot> taskChild) {
+                                    milestoneList = new ArrayList<>();
+
                                     if (taskChild.isSuccessful()) {
                                         QuerySnapshot snapshotChild = taskChild.getResult();
                                         if (!snapshotChild.isEmpty()) {
@@ -140,11 +124,15 @@ public class MainActivity extends AppCompatActivity {
                                                         milestoneList.add(Milestone.fromDocument(documentSnapshotChild.getId(), documentSnapshotChild.getData()));
                                                     }
                                             );
-                                            goalList.forEach(goal1 -> {
-                                                if (goal1.getId().equals(milestoneList.get(0).getGoalRef())){
+
+                                            for (Goal goal1 : goalList) {
+                                                if (goal1.getId().equals(milestoneList.get(0).getGoalRef())) {
                                                     goal1.setMilestoneList(milestoneList);
+                                                    break;
+//                                                    milestoneList.clear();
                                                 }
-                                            });
+                                            }
+
                                         }
 
                                     }
@@ -194,8 +182,8 @@ public class MainActivity extends AppCompatActivity {
                                                         int groupPosition, int childPosition, long id) {
                                 Toast.makeText(
                                         getApplicationContext(),
-                                        goalList.get(groupPosition)
-                                                + " -> "
+//                                        goalList.get(groupPosition) +
+                                                " -> "
                                                 + goalList.get(groupPosition).getMilestoneList().get(
                                                 childPosition), Toast.LENGTH_SHORT
                                 ).show();
@@ -296,7 +284,7 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, "Please fill all", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                FirestoreSave(goal,milestone);
+                FirestoreSave(milestone);
                 Toast.makeText(getApplicationContext(), "Data saved", Toast.LENGTH_SHORT).show();
                 editDialog.dismiss();
             }
@@ -312,23 +300,23 @@ public class MainActivity extends AppCompatActivity {
         editDialog.show();
     }
 
-    private void FirestoreSave(Goal goal,Milestone milestone){
+    private void FirestoreSave(Milestone milestone){
 
         milestone.setName(editName.getText().toString());
         milestone.setDescription(editDesc.getText().toString());
         milestone.setCompleted(isDone);
-        milestone.setGoalRef(goal.getId());
+        milestone.setGoalRef(milestone.getGoalRef());
         Map<String, Object> data = milestone.toFirestore();
         data.put("due_date",editDueDate.getText().toString()+ " 00:00:00");
 
 
 
-        goalRef.document(goal.getId()).collection("milestone").document(milestone.getId()).set(data, SetOptions.merge()).addOnSuccessListener(new OnSuccessListener<Void>() {
+        goalRef.document(milestone.getGoalRef()).collection("milestone").document(milestone.getId()).set(data, SetOptions.merge()).addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void unused) {
                         Log.d(TAG, "DocumentSnapshot successfully written!");
                         Toast.makeText(getApplicationContext(),
-                                goal.getName() + " success added ",
+                                milestone.getName() + " success edit ",
                                 Toast.LENGTH_SHORT).show();
                     }
                 })
@@ -337,7 +325,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onFailure(@NonNull Exception e) {
                         Log.w(TAG, "Error writing document", e);
                         Toast.makeText(getApplicationContext(),
-                                goal.getName() + " FAILED ",
+                                milestone.getName() + " FAILED ",
                                 Toast.LENGTH_SHORT).show();
                     }
                 });

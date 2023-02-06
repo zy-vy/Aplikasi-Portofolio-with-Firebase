@@ -273,7 +273,9 @@ public class GoalExpandableAdapter extends BaseExpandableListAdapter {
                         goal.getName() + " FAILED ",
                         Toast.LENGTH_SHORT).show();
             }
-        });;
+        });
+        context.startActivity(new Intent(context,MainActivity.class));
+
     }
 
     private boolean validateForm(){
@@ -295,7 +297,7 @@ public class GoalExpandableAdapter extends BaseExpandableListAdapter {
 
     private void showEditGoalDialog(View view, Goal goal) {
         final Dialog editDialog = new Dialog(view.getContext());
-        editDialog.setTitle("Edit MileStone (task)");
+//        editDialog.setTitle("Edit Goal");
 
         editDialog.setContentView(R.layout.activity_edit_goal);
         editDialog.setCanceledOnTouchOutside(false);

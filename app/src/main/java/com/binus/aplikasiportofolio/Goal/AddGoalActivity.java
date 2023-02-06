@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.DatePickerDialog;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -12,9 +13,11 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.binus.aplikasiportofolio.MainActivity;
 import com.binus.aplikasiportofolio.R;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -92,6 +95,7 @@ public class AddGoalActivity extends AppCompatActivity {
         Map<String, Object> data = goal.toFirestore();
         data.put("start_date",editStartDate.getText().toString()+ " 00:00:00");
         data.put("final_date",editFinalDate.getText().toString()+ " 00:00:00");
+        data.put("user", FirebaseAuth.getInstance().getCurrentUser().getUid());
 
         if(!validateForm()){
             Toast.makeText(getApplicationContext(),
@@ -118,7 +122,7 @@ public class AddGoalActivity extends AppCompatActivity {
                                 Toast.LENGTH_SHORT).show();
                     }
                 });
-
+        view.getContext().startActivity(new Intent(view.getContext(), MainActivity.class));
     }
 
     private boolean validateForm(){
